@@ -1,110 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self';">
-    <title>Secure GitHub Pages API</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cool Music Page</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.3/purify.min.js"
-            integrity="sha384-...your-hash-here..."
-            crossorigin="anonymous"></script>
-    <script>
-        // Function to parse query parameters from the URL
-        function getQueryParams() {
-            const params = {};
-            window.location.search
-                .substring(1)
-                .split('&')
-                .forEach(pair => {
-                    const [key, value] = pair.split('=');
-                    params[decodeURIComponent(key)] = decodeURIComponent(value);
-                });
-            return params;
-        }
-
-        // Sanitize user input using DOMPurify
-        function sanitizeInput(input) {
-            return DOMPurify.sanitize(input);
-        }
-
-        // Validate ID parameter
-        function isValidId(id) {
-            return /^\d+$/.test(id); // Ensure id is a number
-        }
-
-        // Fetch the CSV file and handle requests
-        fetch('data.csv')
-            .then(response => response.text())
-            .then(csvData => {
-                let dataStore = parseCSV(csvData);
-
-                // Get query parameters
-                const queryParams = getQueryParams();
-
-                // Handle GET request
-                if (queryParams.method === 'get') {
-                    const id = queryParams.id;
-                    if (!isValidId(id)) {
-                        document.write(JSON.stringify({ success: false, message: 'Invalid ID' }));
-                        return;
-                    }
-                    const item = dataStore.find(item => item.id == id);
-                    if (item) {
-                        document.write(JSON.stringify({ success: true, data: item }));
-                    } else {
-                        document.write(JSON.stringify({ success: false, message: 'Item not found' }));
-                    }
-                }
-                // Handle POST request
-                else if (queryParams.method === 'post') {
-                    const newItemName = sanitizeInput(queryParams.name || 'Unnamed Item');
-                    const newItem = {
-                        id: (dataStore.length + 1).toString(),
-                        name: newItemName
-                    };
-                    dataStore.push(newItem);
-
-                    // Convert updated data back to CSV
-                    const updatedCSV = convertToCSV(dataStore);
-
-                    // Display the updated CSV (simulating a write operation)
-                    document.write(JSON.stringify({
-                        success: true,
-                        message: 'Item added successfully',
-                        data: newItem,
-                        updatedCSV: updatedCSV
-                    }));
-                }
-                // Invalid method
-                else {
-                    document.write(JSON.stringify({ success: false, message: 'Invalid method' }));
-                }
-            })
-            .catch(error => {
-                document.write(JSON.stringify({ success: false, message: 'Error fetching data', error: error.message }));
-            });
-
-        // Function to parse CSV data into an array of objects
-        function parseCSV(csv) {
-            const lines = csv.split('\n');
-            const headers = lines[0].split(',');
-            return lines.slice(1).map(line => {
-                const values = line.split(',');
-                return headers.reduce((obj, header, index) => {
-                    obj[header] = values[index];
-                    return obj;
-                }, {});
-            });
-        }
-
-        // Function to convert array of objects back to CSV
-        function convertToCSV(data) {
-            const headers = Object.keys(data[0]).join(',');
-            const rows = data.map(row => Object.values(row).join(','));
-            return headers + '\n' + rows.join('\n');
-        }
-    </script>
+  <div class="container">
+    <h1>Cool Music Player</h1>
+    <div class="player">
+      <audio id="audioPlayer" controls>
+        <source src="assets/music/track1.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+      <div class="controls">
+        <button id="prevBtn">Previous</button>
+        <button id="playPauseBtn">Play</button>
+        <button id="nextBtn">Next</button>
+      </div>
+      <div class="playlist">
+        <h2>Playlist</h2>
+        <ul id="playlist">
+          <li data-src="assets/music/track1.mp3">Track 1</li>
+          <li data-src="assets/music/track2.mp3">Track 2</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>
