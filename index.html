@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Pages API with CSV</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self';">
+    <title>Secure GitHub Pages API</title>
 </head>
 <body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.3/purify.min.js"
+            integrity="sha384-...your-hash-here..."
+            crossorigin="anonymous"></script>
     <script>
         // Function to parse query parameters from the URL
         function getQueryParams() {
@@ -20,24 +24,14 @@
             return params;
         }
 
-        // Function to parse CSV data into an array of objects
-        function parseCSV(csv) {
-            const lines = csv.split('\n');
-            const headers = lines[0].split(',');
-            return lines.slice(1).map(line => {
-                const values = line.split(',');
-                return headers.reduce((obj, header, index) => {
-                    obj[header] = values[index];
-                    return obj;
-                }, {});
-            });
+        // Sanitize user input using DOMPurify
+        function sanitizeInput(input) {
+            return DOMPurify.sanitize(input);
         }
 
-        // Function to convert array of objects back to CSV
-        function convertToCSV(data) {
-            const headers = Object.keys(data[0]).join(',');
-            const rows = data.map(row => Object.values(row).join(','));
-            return headers + '\n' + rows.join('\n');
+        // Validate ID parameter
+        function isValidId(id) {
+            return /^\d+$/.test(id); // Ensure id is a number
         }
 
         // Fetch the CSV file and handle requests
@@ -52,6 +46,10 @@
                 // Handle GET request
                 if (queryParams.method === 'get') {
                     const id = queryParams.id;
+                    if (!isValidId(id)) {
+                        document.write(JSON.stringify({ success: false, message: 'Invalid ID' }));
+                        return;
+                    }
                     const item = dataStore.find(item => item.id == id);
                     if (item) {
                         document.write(JSON.stringify({ success: true, data: item }));
@@ -61,9 +59,10 @@
                 }
                 // Handle POST request
                 else if (queryParams.method === 'post') {
+                    const newItemName = sanitizeInput(queryParams.name || 'Unnamed Item');
                     const newItem = {
                         id: (dataStore.length + 1).toString(),
-                        name: queryParams.name || 'Unnamed Item'
+                        name: newItemName
                     };
                     dataStore.push(newItem);
 
@@ -86,6 +85,26 @@
             .catch(error => {
                 document.write(JSON.stringify({ success: false, message: 'Error fetching data', error: error.message }));
             });
+
+        // Function to parse CSV data into an array of objects
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',');
+            return lines.slice(1).map(line => {
+                const values = line.split(',');
+                return headers.reduce((obj, header, index) => {
+                    obj[header] = values[index];
+                    return obj;
+                }, {});
+            });
+        }
+
+        // Function to convert array of objects back to CSV
+        function convertToCSV(data) {
+            const headers = Object.keys(data[0]).join(',');
+            const rows = data.map(row => Object.values(row).join(','));
+            return headers + '\n' + rows.join('\n');
+        }
     </script>
 </body>
 </html>
